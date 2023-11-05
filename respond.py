@@ -10,9 +10,9 @@ auth_token = 'f90957889f373603b14d63187171eb58'
 client = Client(account_sid, auth_token)
 
 message = client.messages.create(
-                              from_='+18194142309',
+                              from_='+1',
                               body='ㅎㅇ~',
-                              to='+18195883372'
+                              to='+1'
                           )
 
 print(f" SID: {message.sid} STATUS: {message.status}")
