@@ -1,7 +1,10 @@
 import random
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
+import sqlite3
+import database
 import string 
+import datetime
 
 
 app = Flask(__name__)
@@ -98,6 +101,7 @@ def sms_reply():
     resp = MessagingResponse()
     user_number = request.values['From']
     user_response = request.values['Body'].strip() #user response
+    customer_id = database.get_customer_id(user_number)
     
     
     if user_number not in user_sessions:
@@ -144,6 +148,7 @@ def sms_reply():
                     user_sessions[user_number] = []
                     order_data.append(user_response)
                     print(user_sessions)
+                    database.insert_order(customer_id, 1, )
                     dict_order = {
                         'brand':'ZPODS',
                         'flavor':res,

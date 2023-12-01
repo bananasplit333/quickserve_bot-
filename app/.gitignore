@@ -18,3 +18,5 @@ TWILIO_ACCOUNT_SID
 # My Number
 MY_NUMBER
 
+#Authorized Number
+TWILIO_NUMBER
