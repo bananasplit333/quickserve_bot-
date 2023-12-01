@@ -98,6 +98,7 @@ ordering = False
 @app.route("/sms", methods=['GET', 'POST'])
 def sms_reply():
     # Start our TwiML response
+    print(user_sessions)
     resp = MessagingResponse()
     user_number = request.values['From']
     user_response = request.values['Body'].strip() #user response
@@ -106,8 +107,8 @@ def sms_reply():
     
     if user_number not in user_sessions:
         print(user_response)
+        user_sessions[user_number] = {}
         if user_response == "1":
-            user_sessions[user_number] = {}
             user_sessions[user_number]['brand'] = "ZPODS"
             resp.message(list_items(z_pod))
             return str(resp)
@@ -145,27 +146,28 @@ def sms_reply():
                 print("selecting qty")
                 res = order_data[-1]
                 if user_response.isnumeric():
-                    user_sessions[user_number] = []
                     order_data.append(user_response)
                     print(user_sessions)
                     current_date = datetime.date.today()
-                    database.insert_order(customer_id, 1, current_date, int(user_response))
-                    dict_order = {
-                        'brand':'ZPODS',
-                        'flavor':res,
-                        'qty': user_response
-                    }
-                    user_sessions[user_number].append(dict_order)
+                    database.insert_order(customer_id, 1, res, current_date, int(user_response))
                     print(user_sessions)
                     amnt = float(user_response) * 23.99
                     resp.message("ordered " + user_response + " of " + res + " for a total of " + str(amnt))
+                    del user_sessions[user_number]['brand']
                 return str(resp)
             else: 
                 print("order data new length " + str(len(order_data)))
                 print("else message")
                 resp.message("hi")
                 return str(resp)
-            """    
+    else:
+        return intro_msg()
+    
+
+
+
+
+"""    
             elif user_response == "back":
                 del user_sessions[user_number]
                 print("user deleted")

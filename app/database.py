@@ -13,13 +13,13 @@ def insert_customer(customer_id, phone_number):
     conn.commit()
     conn.close()
 
-def insert_order(customer_id, category_id, order_date, qty):
+def insert_order(customer_id, category_id, flavor, order_date, qty):
     conn = create_connection()
     cursor = conn.cursor()
     cursor.execute('''INSERT INTO orders (
-                   customer_id, category_id, orderDate, qty)
-                   VALUES (?,?,?,?)
-    ''', (customer_id, category_id, order_date, qty))
+                   customer_id, category_id, flavor, orderDate, qty)
+                   VALUES (?,?,?,?,?)
+    ''', (customer_id, category_id, flavor, order_date, qty))
     conn.commit()
     conn.close()
 

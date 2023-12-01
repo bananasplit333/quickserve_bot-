@@ -28,6 +28,10 @@ cursor.execute('''CREATE TABLE orders (
                FOREIGN KEY(customer_id) REFERENCES customers(customer_id),
                FOREIGN KEY(category_id) REFERENCES categories(category_id)
 )''') 
+
+cursor.execute('''ALTER TABLE orders (
+               ADD COLUMN flavor TEXT;
+)''')
 conn.commit()
 
 conn.close()
