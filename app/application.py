@@ -148,7 +148,8 @@ def sms_reply():
                     user_sessions[user_number] = []
                     order_data.append(user_response)
                     print(user_sessions)
-                    database.insert_order(customer_id, 1, )
+                    current_date = datetime.date.today()
+                    database.insert_order(customer_id, 1, current_date, int(user_response))
                     dict_order = {
                         'brand':'ZPODS',
                         'flavor':res,

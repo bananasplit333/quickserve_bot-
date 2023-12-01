@@ -1,36 +1,47 @@
-from flask import Flask, request
-from twilio.twiml.messaging_response import MessagingResponse, Message
-from twilio.rest import Client
-from dotenv import load_dotenv
-import os 
-load_dotenv()
-app = Flask(__name__)
+import database 
+import sqlite3
 
-account_sid = os.getenv('TWILIO_ACCOUNT_SID')
-auth_token = os.getenv('TWILIO_AUTH_TOKEN')
-client = Client(account_sid, auth_token)
+def create_connection():
+    try: 
+        conn = sqlite3.connect('customer_orders.db')
+        return conn
+    except sqlite3.Error as e:
+        print(e)
+    return None
 
-@app.route("/")
-def hello():
-    message = client.messages.create(
-        body='Hello World!',
-        from_=os.environ['TWILIO_NUMBER'],
-        to=os.environ['MY_NUMBER']
-    )
-    print(message.sid)
-    return "Hello World!"
+# Function to execute a SELECT query and fetch results
+def select_query(conn, query):
+    try:
+        cursor = conn.cursor()
+        cursor.execute(query)
+        rows = cursor.fetchall()
+        return rows
+    except sqlite3.Error as e:
+        print(e)
+    return None
 
+def main():
+    # Connect to the database
+    conn = create_connection()
 
-@app.route("/sms", methods=['POST'])
-def sms_reply():
-    """Respond to incoming SMS with a simple text message."""
-    # Start our TwiML response
-    resp = MessagingResponse()
+    if conn is not None:
+        # Example SELECT query
+        query = "SELECT * FROM orders"
 
-    # Add a message
-    resp.message("The Robots are coming! Head for the hills!")
+        # Execute the SELECT query
+        results = select_query(conn, query)
 
-    return str(resp)
+        if results is not None:
+            # Process and print the query results
+            for row in results:
+                print(row)
+        else:
+            print("Query execution failed.")
 
-if __name__ == "__main__":
-    app.run(debug=True)
+        # Close the database connection
+        conn.close()
+    else:
+        print("Database connection failed.")
+
+if __name__ == '__main__':
+    main()
