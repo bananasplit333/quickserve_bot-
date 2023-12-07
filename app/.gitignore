@@ -20,3 +20,6 @@ MY_NUMBER
 
 #Authorized Number
 TWILIO_NUMBER
+
+#db file
+*.db
