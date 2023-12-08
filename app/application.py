@@ -71,7 +71,12 @@ RM_choice = {
     "mango ice": 3,
     "aloe grape": 14
 }
-
+COST_ZPOD = 23.99
+COST_FG = 22.99
+COST_IV5 = 29.99
+COST_IV7 = 32.99
+COST_RM = 26.99
+    
 
 @app.route("/sms", methods=['GET', 'POST'])
 def sms_reply():
@@ -129,21 +134,25 @@ def sms_reply():
         if user_sessions[user_number]['brand'] == "ZPODS":
             print("ZPODS")
             print("ordered_data: " + str(order_data["ordered"]))
-            print(user_response in z_pod)
-            #user has chosen the right flavor
-            if user_response in z_pod:
+            if user_response.isnumeric():
                 print(user_response)
-                resp.message("Please enter the number of " + user_response + " you would like to order")
-                order_data["zpods"][user_response] = 0 #add to order data list
-                print(f"updated order_data : {order_data['zpods']}")
-                order_states[user_number] = 'qty_choice' #change state to choose count
-                return str(resp)
+                available_flavors = [flavor for flavor, quantity in z_pod.items() if quantity > 0]
+                #user has chosen the right flavor
+                if available_flavors[int(user_response)-1] in z_pod:
+                    resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
+                    order_data["zpods"][available_flavors[int(user_response)-1]] = 0 #add to order data list
+                    print(f"updated order_data : {order_data['zpods']}")
+                    order_states[user_number] = 'qty_choice' #change state to choose count
+                    return str(resp)
+                else:
+                    print("error, please choose a flavor or text 'back' to go back to the previous menu.")
+                    return str(resp)
             elif user_response == "back":
                 print("back")
                 del user_sessions[user_number]
                 return intro_msg(user_number)
             else:
-                print("error, please choose a flavor or send 'back' to go back to the previous menu.")
+                print("error, please choose a flavor or text 'back' to go back to the previous menu.")
                 return str(resp)
             
         #fgpods
@@ -151,19 +160,25 @@ def sms_reply():
             print("fgpods")
             print("ordered_data: " + str(order_data["ordered"]))
             #user has chosen the right flavor
-            if user_response in fg_choice:
+            if user_response.isnumeric():
                 print(user_response)
-                resp.message("Please enter the number of " + user_response + " you would like to order")
-                order_data["fgpods"][user_response] = 0 #add to order data list
-                print(f"updated order_data : {order_data['fgpods']}")
-                order_states[user_number] = 'qty_choice' #change state to choose count
-                return str(resp)
+                available_flavors = [flavor for flavor, quantity in fg_choice.items() if quantity > 0]
+                #user has chosen the right flavor
+                if available_flavors[int(user_response)-1] in fg_choice:
+                    resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
+                    order_data["fgpods"][available_flavors[int(user_response)-1]] = 0 #add to order data list
+                    print(f"updated order_data : {order_data['fgpods']}")
+                    order_states[user_number] = 'qty_choice' #change state to choose count
+                    return str(resp)
+                else:
+                    print("error, please choose a flavor or text 'back' to go back to the previous menu.")
+                    return str(resp)
             elif user_response == "back":
                 print("back")
                 del user_sessions[user_number]
                 return intro_msg(user_number)
             else:
-                print("error, please choose a flavor or send 'back' to go back to the previous menu.")
+                print("error, please choose a flavor or text 'back' to go back to the previous menu.")
                 return str(resp)
         
         #ivida5k
@@ -172,19 +187,25 @@ def sms_reply():
             print("ordered_data: " + str(order_data["ordered"]))
             print(user_response in ivida_5k)
             #user has chosen the right flavor
-            if user_response in ivida_5k:
+            if user_response.isnumeric():
                 print(user_response)
-                resp.message("Please enter the number of " + user_response + " you would like to order")
-                order_data["ivida5k"][user_response] = 0 #add to order data list
-                print(f"updated order_data : {order_data['ivida5k']}")
-                order_states[user_number] = 'qty_choice' #change state to choose count
-                return str(resp)
+                available_flavors = [flavor for flavor, quantity in ivida_5k.items() if quantity > 0]
+                #user has chosen the right flavor
+                if available_flavors[int(user_response)-1] in ivida_5k:
+                    resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
+                    order_data["ivida5k"][available_flavors[int(user_response)-1]] = 0 #add to order data list
+                    print(f"updated order_data : {order_data['ivida5k']}")
+                    order_states[user_number] = 'qty_choice' #change state to choose count
+                    return str(resp)
+                else:
+                    print("error, please choose a flavor or text 'back' to go back to the previous menu.")
+                    return str(resp)
             elif user_response == "back":
                 print("back")
                 del user_sessions[user_number]
                 return intro_msg(user_number)
             else:
-                print("error, please choose a flavor or send 'back' to go back to the previous menu.")
+                print("error, please choose a flavor or text 'back' to go back to the previous menu.")
                 return str(resp)
         
         #ivida7k
@@ -193,19 +214,25 @@ def sms_reply():
             print("ordered_data: " + str(order_data["ordered"]))
             print(user_response in ivida_5k)
             #user has chosen the right flavor
-            if user_response in ivida_7k:
+            if user_response.isnumeric():
                 print(user_response)
-                resp.message("Please enter the number of " + user_response + " you would like to order")
-                order_data["ivida7k"][user_response] = 0 #add to order data list
-                print(f"updated order_data : {order_data['ivida7k']}")
-                order_states[user_number] = 'qty_choice' #change state to choose count
-                return str(resp)
+                available_flavors = [flavor for flavor, quantity in ivida_7k.items() if quantity > 0]
+                #user has chosen the right flavor
+                if available_flavors[int(user_response)-1] in ivida_7k:
+                    resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
+                    order_data["ivida7k"][available_flavors[int(user_response)-1]] = 0 #add to order data list
+                    print(f"updated order_data : {order_data['ivida7k']}")
+                    order_states[user_number] = 'qty_choice' #change state to choose count
+                    return str(resp)
+                else:
+                    print("error, please choose a flavor or text 'back' to go back to the previous menu.")
+                    return str(resp)
             elif user_response == "back":
                 print("back")
                 del user_sessions[user_number]
                 return intro_msg(user_number)
             else:
-                print("error, please choose a flavor or send 'back' to go back to the previous menu.")
+                print("error, please choose a flavor or text 'back' to go back to the previous menu.")
                 return str(resp)
         
         #rm
@@ -214,19 +241,25 @@ def sms_reply():
             print("ordered_data: " + str(order_data["ordered"]))
             print(user_response in ivida_5k)
             #user has chosen the right flavor
-            if user_response in RM_choice:
+            if user_response.isnumeric():
                 print(user_response)
-                resp.message("Please enter the number of " + user_response + " you would like to order")
-                order_data["rm"][user_response] = 0 #add to order data list
-                print(f"updated order_data : {order_data['rm']}")
-                order_states[user_number] = 'qty_choice' #change state to choose count
-                return str(resp)
+                available_flavors = [flavor for flavor, quantity in RM_choice.items() if quantity > 0]
+                #user has chosen the right flavor
+                if available_flavors[int(user_response)-1] in RM_choice:
+                    resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
+                    order_data["rm"][available_flavors[int(user_response)-1]] = 0 #add to order data list
+                    print(f"updated order_data : {order_data['rm']}")
+                    order_states[user_number] = 'qty_choice' #change state to choose count
+                    return str(resp)
+                else:
+                    print("error, please choose a flavor or text 'back' to go back to the previous menu.")
+                    return str(resp)
             elif user_response == "back":
                 print("back")
                 del user_sessions[user_number]
                 return intro_msg(user_number)
             else:
-                print("error, please choose a flavor or send 'back' to go back to the previous menu.")
+                print("error, please choose a flavor or text 'back' to go back to the previous menu.")
                 return str(resp)
         
         
@@ -253,7 +286,7 @@ def sms_reply():
                     amnt = float(user_response) * 23.99
                     order_data["zpods"].update({res : int(user_response)})
                     print(order_data)
-                    resp.message("added " + user_response + ". Would you like anything else?")
+                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
                     return str(resp)
             else:
@@ -277,7 +310,7 @@ def sms_reply():
                     amnt = float(user_response) * 23.99
                     order_data["fgpods"].update({res : int(user_response)})
                     print(order_data)
-                    resp.message("added " + user_response + ". Would you like anything else?")
+                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
                     return str(resp)
             else:
@@ -301,7 +334,7 @@ def sms_reply():
                     amnt = float(user_response) * 23.99
                     order_data["ivida5k"].update({res : int(user_response)})
                     print(order_data)
-                    resp.message("added " + user_response + ". Would you like anything else?")
+                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
                     return str(resp)
             else:
@@ -325,7 +358,7 @@ def sms_reply():
                     amnt = float(user_response) * 23.99
                     order_data["ivida7k"].update({res : int(user_response)})
                     print(order_data)
-                    resp.message("added " + user_response + ". Would you like anything else?")
+                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
                     return str(resp)
             else:
@@ -348,7 +381,7 @@ def sms_reply():
                     amnt = float(user_response) * 23.99
                     order_data["rm"].update({res : int(user_response)})
                     print(order_data)
-                    resp.message("added " + user_response + ". Would you like anything else?")
+                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
                     return str(resp)
             else:
@@ -360,30 +393,31 @@ def sms_reply():
             order_states[user_number] = 'qty_choice'
             return str(resp)
 
-    
+    #User choosing between checkout and continuing 
     elif curr_session == 'cart_choice':
         print("cart_choice")
         user_response = request.values['Body'].strip().lower()
         print("user response in cart_choice " + str(user_sessions[user_number]))
         print(user_response)
-        if str(user_response).lower() == "yes":
+        if str(user_response).lower() == "y":
             order_states[user_number] = 'flavor_choice'
             category = get_current_category(str(user_sessions[user_number]['brand']))
             resp.message(list_items(category))
             return str(resp)
-        elif str(user_response).lower() == "no":   #checking out 
-            resp.message(f"checked out. thank you for your order. your order # is {generate_confirmation_code()}")
-            for keys, values in order_data["zpods"].items():
-                print(keys, values)
+        elif str(user_response).lower() == "n":   #checking out 
+            resp.message(f"ORDER SUMMARY: \n{list_order()} \n\nThank you for your order.\nYour total is ${calculate_total()}.\n Your confirmation code is: {generate_confirmation_code()}")
+            print(list_order())
             del user_sessions[user_number]
-            order_states[user_number] = 'start'
             clear_cart()
+            
             print(f"cleared cart. order data: {user_sessions}")
             order_states[user_number] = 'start'
             return str(resp)
         else:
-            resp.message("error, please enter yes to continue shopping or no to check out.")
+            resp.message("Error, please text 'Y' to continue shopping or 'N' to check out.")
             return str(resp)
+    else:
+        print("fringe else case entered")
 
     
 def clear_cart():
@@ -395,18 +429,21 @@ def clear_cart():
 
 def list_items(type):
     keys = [key for key, value in type.items() if value > 0]
-    flavors = "\n".join(keys)
-    message = "Please choose between our flavors: \n" + flavors +  " with the amount. (ex. chew, 3)"  "\n" + "text 'back' to go back"
+    indexed_flavors = [f"{index+1}. {flavor}" for index, flavor in enumerate(keys)]
+    flavors = "\n".join(indexed_flavors)
+    message = "Please choose between our flavors: \n" + flavors +"\n" + "text 'back' to go back"
     return message
 
 def intro_msg(user_number):
     resp = MessagingResponse()
-    resp.message("""Welcome to our automated ordering system. Please reply with one of the following options: 
-    1 - ZPODS (24.99)
-    2 - FG PODS (22.99)
-    3 - IVIDA 5k (29.99)
-    4 - IVIDA 7K (32.99)
-    5 - RM Puff Bars 3.6k (23.99)
+    resp.message(f"""Welcome to our automated ordering system. Please reply with one of the following options: 
+    \nSTLTH PODS
+    1 - ZPODS ({COST_ZPOD})
+    2 - FG PODS ({COST_FG})
+    \nDISPOSABLES:
+    3 - IVIDA 5k ({COST_IV5})
+    4 - IVIDA 7K ({COST_IV7})
+    5 - RM Puff Bars 3.6k ({COST_RM})
                         """)
     order_states[user_number] = 'start'
     return str(resp)
@@ -425,6 +462,9 @@ def generate_confirmation_code():
     confirmation_code.upper()
     return confirmation_code
 
+"""def get_total():
+    for category, items in order_data.items():"""
+
 def get_current_category(brand):
             if brand == "ZPODS":
                 return z_pod
@@ -436,6 +476,47 @@ def get_current_category(brand):
                 return ivida_7k
             else: 
                 return RM_choice
+            
+def list_order():
+    total_order = []
+    for category, items in order_data.items():
+        if category != "ordered":
+            if items:
+                total_order.append("\n" + category.upper())
+                for item, quantity in items.items():
+                    total_order.append(f"{quantity} {item}")
+    order_list = '\n'.join(total_order)
+    return order_list
+
+def calculate_total():
+    total_sum = 0
+    for category, products in order_data.items():
+        if category != "ordered":
+            for flavor, qty in products.items():
+                if category == "zpods":
+                    total_sum += (qty * COST_ZPOD)
+                elif category == "fgpods":
+                    total_sum += (qty * COST_FG)
+                elif category == "ivida5k":
+                    total_sum += (qty * COST_IV5)
+                elif category == "ivida7k":
+                    total_sum += (qty * COST_IV7)
+                else:
+                    total_sum += (qty * COST_RM)
+    return round(total_sum,2)
+  
+
+"""order_data = {"ordered": False,
+              "zpods": {'acai berry':2,
+                        'chew':3},
+              "fgpods": {'lemon mint':5,
+                         'rotund belly':3
+                         },
+              "ivida5k": {},
+              "ivida7k": {},
+              "rm": {}}
+
+print(calculate_total())"""
 
 if __name__ == "__main__":
     app.run(debug=True)
