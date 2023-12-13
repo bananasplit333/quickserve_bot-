@@ -18,59 +18,8 @@ order_data = {"ordered": False,
               "ivida5k": {},
               "ivida7k": {},
               "rm": {}}
+
 ordering = False
-z_pod = {
-    "acai berry": 30,
-    "iced grape": 42,
-    "banana": 22,
-    "fruit punch": 0,
-    "banana ice": 22,
-    "skittle ice": 0,
-    "chew": 40,
-    "blue raspberry": 33,
-}
-
-fg_choice = {
-    "pineapple banana orange ice": 12,
-    "lemon mint": 5,
-    "watermelon ice": 19,
-    "blackberry lemon": 8,
-    "banana freeze": 27,
-    "banana mint": 3,
-    "grape ice": 14,
-    "strawberry watermelon": 21
-}
-
-ivida_5k = {
-    "sktl ice": 20,
-    "watermelon ice": 12,
-    "fruit punch": 4,
-    "sour apple" : 33,
-    "watermelon strawberry kiwi": 8,
-    "cherry berry": 19,
-    "aloe grape ice": 10,
-    "grape ice": 0,
-    "gb ice": 0,
-    "blue razz ice": 29,
-    "cool mint": 34,
-    "blue razz lemonade": 14,
-    "peach ice": 13
-}
-
-ivida_7k = {
-    "fruit punch": 10,
-    "peach ice": 12,
-    "blue razz ice": 13,
-    "pineapple mango": 14
-}
-
-RM_choice = {
-    "pineapple ice": 18,
-    "lush ice": 7,
-    "mixed berry": 29,
-    "mango ice": 3,
-    "aloe grape": 14
-}
 COST_ZPOD = 23.99
 COST_FG = 22.99
 COST_IV5 = 29.99
@@ -83,8 +32,10 @@ def sms_reply():
     # Start our TwiML response
     resp = MessagingResponse()
     user_number = request.values['From']
+    print(user_number)
     user_response = request.values['Body'].strip() #user response
     customer_id = database.get_customer_id(user_number)
+    print(customer_id)
     global user_sessions
     global order_data
     global ordering
@@ -98,35 +49,36 @@ def sms_reply():
         if user_response == "1":
             user_sessions[user_number]['brand'] = "ZPODS"
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(z_pod))
+            resp.message(list_items(1))
             return str(resp)
         elif user_response == "2":
             user_sessions[user_number]['brand'] = "FGPODS"
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(fg_choice))
+            resp.message(list_items(2))
             return str(resp)
         elif user_response == "3":
             user_sessions[user_number]['brand'] = "IVIDA5K"
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(ivida_5k))
+            resp.message(list_items(3))
             return str(resp)
         elif user_response == "4": 
             user_sessions[user_number]['brand'] = "IVIDA7K"
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(ivida_7k))
+            resp.message(list_items(4))
             return str(resp)
         elif user_response == "5":
             user_sessions[user_number]['brand'] = "RM"
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(RM_choice))
+            resp.message(list_items(5))
             return str(resp)
         else:
             return intro_msg(user_number)
     elif user_response == "back":
         return intro_msg(user_number)
-        
+
     #user is in active session, is choosing a flavor
     elif curr_session == 'flavor_choice':
+        database.start_order(customer_id)
         user_response = request.values['Body'].strip().lower()
         print("user response in active session " + str(user_sessions[user_number]))
 
@@ -136,9 +88,9 @@ def sms_reply():
             print("ordered_data: " + str(order_data["ordered"]))
             if user_response.isnumeric():
                 print(user_response)
-                available_flavors = [flavor for flavor, quantity in z_pod.items() if quantity > 0]
+                available_flavors = get_item_list(1)
                 #user has chosen the right flavor
-                if available_flavors[int(user_response)-1] in z_pod:
+                if available_flavors[int(user_response)-1]:
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["zpods"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['zpods']}")
@@ -281,13 +233,12 @@ def sms_reply():
                     resp.message("Please enter a number between 1 and 10")
                     return str(resp)
                 else: 
-                    current_date = datetime.date.today()
                     print(user_sessions)
-                    amnt = float(user_response) * 23.99
                     order_data["zpods"].update({res : int(user_response)})
                     print(order_data)
                     resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
                     order_states[user_number] = 'cart_choice'
+                    database.add_to_cart(customer_id, res, 1, user_response)
                     return str(resp)
             else:
                 resp.message("Please enter a number.")
@@ -376,7 +327,6 @@ def sms_reply():
                     resp.message("Please enter a number between 1 and 10")
                     return str(resp)
                 else: 
-                    current_date = datetime.date.today()
                     print(user_sessions)
                     amnt = float(user_response) * 23.99
                     order_data["rm"].update({res : int(user_response)})
@@ -427,9 +377,9 @@ def clear_cart():
     order_data["rm"] = {}
     order_data["zpods"] = {}
 
-def list_items(type):
-    keys = [key for key, value in type.items() if value > 0]
-    indexed_flavors = [f"{index+1}. {flavor}" for index, flavor in enumerate(keys)]
+def list_items(category_id):
+    product_list = database.get_product_list(category_id)
+    indexed_flavors = [f'{index}. {flavor.replace("_", " ")}' for index, (_, flavor, _, _, _) in enumerate(product_list, start=1)]
     flavors = "\n".join(indexed_flavors)
     message = "Please choose between our flavors: \n" + flavors +"\n" + "text 'back' to go back"
     return message
@@ -467,15 +417,15 @@ def generate_confirmation_code():
 
 def get_current_category(brand):
             if brand == "ZPODS":
-                return z_pod
+                return 1
             elif brand == "FGPODS":
-                return fg_choice
+                return 2
             elif brand == "IVIDA5K":
-                return ivida_5k
+                return 3
             elif brand == "IVIDA7K":
-                return ivida_7k
-            else: 
-                return RM_choice
+                return 4
+            else:
+                return 5
             
 def list_order():
     total_order = []
@@ -504,7 +454,11 @@ def calculate_total():
                 else:
                     total_sum += (qty * COST_RM)
     return round(total_sum,2)
-  
+
+def get_item_list(category_id):
+    product_list = database.get_product_list(category_id)
+    indexed_flavors = [f'{flavor.replace("_", " ")}' for _, flavor, _, _, qty in product_list]
+    return indexed_flavors
 
 """order_data = {"ordered": False,
               "zpods": {'acai berry':2,
