@@ -1,7 +1,6 @@
 import random
 from flask import Flask, request
 from twilio.twiml.messaging_response import MessagingResponse
-import sqlite3
 import database
 import string 
 import datetime
@@ -42,34 +41,20 @@ def sms_reply():
     
     curr_session = order_states.get(user_number, 'start')
 
+    
     #if user is in new session, display intro message
     if curr_session == 'start':
         print(user_response)
-        user_sessions[user_number] = {}
-        if user_response == "1":
-            user_sessions[user_number]['brand'] = "ZPODS"
+        #Initialize session with order_started flag
+        user_sessions[user_number] = {'order_started':False}
+        if user_response in ["1", "2", "3", "4", "5"]:
+            brand_mapping = {"1":"ZPODS", "2":"FGPODS", "3":"IVIDA5K", "4":"IVIDA7K", "5":"RM"}
+            user_sessions[user_number]['brand'] = brand_mapping[user_response]
             order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(1))
-            return str(resp)
-        elif user_response == "2":
-            user_sessions[user_number]['brand'] = "FGPODS"
-            order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(2))
-            return str(resp)
-        elif user_response == "3":
-            user_sessions[user_number]['brand'] = "IVIDA5K"
-            order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(3))
-            return str(resp)
-        elif user_response == "4": 
-            user_sessions[user_number]['brand'] = "IVIDA7K"
-            order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(4))
-            return str(resp)
-        elif user_response == "5":
-            user_sessions[user_number]['brand'] = "RM"
-            order_states[user_number] = 'flavor_choice'
-            resp.message(list_items(5))
+            if not order_data['ordered']:
+                database.start_order(customer_id)
+                order_data['ordered'] = True
+            resp.message(list_items(user_response))
             return str(resp)
         else:
             return intro_msg(user_number)
@@ -78,7 +63,6 @@ def sms_reply():
 
     #user is in active session, is choosing a flavor
     elif curr_session == 'flavor_choice':
-        database.start_order(customer_id)
         user_response = request.values['Body'].strip().lower()
         print("user response in active session " + str(user_sessions[user_number]))
 
@@ -91,6 +75,7 @@ def sms_reply():
                 available_flavors = get_item_list(1)
                 #user has chosen the right flavor
                 if available_flavors[int(user_response)-1]:
+                    user_sessions[user_number]['last_selected_flavor'] = available_flavors[int(user_response)-1]
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["zpods"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['zpods']}")
@@ -110,13 +95,13 @@ def sms_reply():
         #fgpods
         elif user_sessions[user_number]['brand'] == "FGPODS":
             print("fgpods")
-            print("ordered_data: " + str(order_data["ordered"]))
             #user has chosen the right flavor
             if user_response.isnumeric():
                 print(user_response)
-                available_flavors = [flavor for flavor, quantity in fg_choice.items() if quantity > 0]
+                available_flavors = get_item_list(2)
                 #user has chosen the right flavor
-                if available_flavors[int(user_response)-1] in fg_choice:
+                if available_flavors[int(user_response)-1]:
+                    user_sessions[user_number]['last_selected_flavor'] = available_flavors[int(user_response)-1]
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["fgpods"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['fgpods']}")
@@ -136,14 +121,13 @@ def sms_reply():
         #ivida5k
         elif user_sessions[user_number]['brand'] == "IVIDA5K":
             print("5k")
-            print("ordered_data: " + str(order_data["ordered"]))
-            print(user_response in ivida_5k)
             #user has chosen the right flavor
             if user_response.isnumeric():
                 print(user_response)
-                available_flavors = [flavor for flavor, quantity in ivida_5k.items() if quantity > 0]
+                available_flavors = get_item_list(3)
                 #user has chosen the right flavor
-                if available_flavors[int(user_response)-1] in ivida_5k:
+                if available_flavors[int(user_response)-1]:
+                    user_sessions[user_number]['last_selected_flavor'] = available_flavors[int(user_response)-1]
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["ivida5k"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['ivida5k']}")
@@ -163,14 +147,13 @@ def sms_reply():
         #ivida7k
         elif user_sessions[user_number]['brand'] == "IVIDA7K":
             print("7k")
-            print("ordered_data: " + str(order_data["ordered"]))
-            print(user_response in ivida_5k)
             #user has chosen the right flavor
             if user_response.isnumeric():
                 print(user_response)
-                available_flavors = [flavor for flavor, quantity in ivida_7k.items() if quantity > 0]
+                available_flavors = get_item_list(4)
                 #user has chosen the right flavor
-                if available_flavors[int(user_response)-1] in ivida_7k:
+                if available_flavors[int(user_response)-1]:
+                    user_sessions[user_number]['last_selected_flavor'] = available_flavors[int(user_response)-1]
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["ivida7k"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['ivida7k']}")
@@ -190,14 +173,13 @@ def sms_reply():
         #rm
         elif user_sessions[user_number]['brand'] == "RM":
             print("rm")
-            print("ordered_data: " + str(order_data["ordered"]))
-            print(user_response in ivida_5k)
             #user has chosen the right flavor
             if user_response.isnumeric():
                 print(user_response)
-                available_flavors = [flavor for flavor, quantity in RM_choice.items() if quantity > 0]
+                available_flavors = get_item_list(5)
                 #user has chosen the right flavor
-                if available_flavors[int(user_response)-1] in RM_choice:
+                if available_flavors[int(user_response)-1]:
+                    user_sessions[user_number]['last_selected_flavor'] = available_flavors[int(user_response)-1]
                     resp.message("Please enter the number of " + available_flavors[int(user_response)-1] + " you would like to order")
                     order_data["rm"][available_flavors[int(user_response)-1]] = 0 #add to order data list
                     print(f"updated order_data : {order_data['rm']}")
@@ -225,7 +207,7 @@ def sms_reply():
         #zpods
         if user_sessions[user_number]['brand'] == 'ZPODS':
             print(order_data['zpods'])
-            res = list(order_data["zpods"].keys())[-1]
+            res = user_sessions[user_number]['last_selected_flavor'] 
             ## if user responds with a number, then we can add it to the cart
             if user_response.isnumeric():
                 ## make sure the order cannot be 0 or less
@@ -234,12 +216,16 @@ def sms_reply():
                     return str(resp)
                 else: 
                     print(user_sessions)
-                    order_data["zpods"].update({res : int(user_response)})
-                    print(order_data)
-                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
-                    order_states[user_number] = 'cart_choice'
-                    database.add_to_cart(customer_id, res, 1, user_response)
-                    return str(resp)
+                    if (database.add_to_cart(customer_id, res, 1, user_response)):
+                        order_data["zpods"].update({res : int(user_response)})
+                        resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
+                        order_states[user_number] = 'cart_choice'
+                        return str(resp)
+                    else:
+                        remaining_stock = database.get_inventory_stock(res, 1)
+                        resp.message(f"Error: not enough left in stock. \nREMAINING STOCK: {remaining_stock}\n\n{list_items(1)}")
+                        order_states[user_number] = 'flavor_choice'    
+                        return str(resp)
             else:
                 resp.message("Please enter a number.")
                 order_states[user_number] = 'qty_choice'
@@ -248,7 +234,7 @@ def sms_reply():
         #fgpods
         elif user_sessions[user_number]['brand'] == 'FGPODS':
             print(order_data['fgpods'])
-            res = list(order_data['fgpods'].keys())[-1]
+            res = user_sessions[user_number]['last_selected_flavor'] 
             ## if user responds with a number, then we can add it to the cart
             if user_response.isnumeric():
                 ## make sure the order cannot be 0 or less
@@ -256,14 +242,17 @@ def sms_reply():
                     resp.message("Please enter a number between 1 and 10")
                     return str(resp)
                 else: 
-                    current_date = datetime.date.today()
                     print(user_sessions)
-                    amnt = float(user_response) * 23.99
-                    order_data["fgpods"].update({res : int(user_response)})
-                    print(order_data)
-                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
-                    order_states[user_number] = 'cart_choice'
-                    return str(resp)
+                    if (database.add_to_cart(customer_id, res, 2, user_response)):
+                        order_data["fgpods"].update({res : int(user_response)})
+                        resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
+                        order_states[user_number] = 'cart_choice'
+                        return str(resp)
+                    else:
+                        remaining_stock = database.get_inventory_stock(res, 2)
+                        resp.message(f"Error: not enough left in stock. \nREMAINING STOCK: {remaining_stock}\n\n{list_items(2)}")
+                        order_states[user_number] = 'flavor_choice'    
+                        return str(resp)
             else:
                 resp.message("Please enter a number.")
                 order_states[user_number] = 'qty_choice'
@@ -272,7 +261,7 @@ def sms_reply():
         #ivida5k
         elif user_sessions[user_number]['brand'] == 'IVIDA5K':
             print(order_data['ivida5k'])
-            res = list(order_data['ivida5k'].keys())[-1]
+            res = user_sessions[user_number]['last_selected_flavor'] 
             ## if user responds with a number, then we can add it to the cart
             if user_response.isnumeric():
                 ## make sure the order cannot be 0 or less
@@ -280,14 +269,17 @@ def sms_reply():
                     resp.message("Please enter a number between 1 and 10")
                     return str(resp)
                 else: 
-                    current_date = datetime.date.today()
                     print(user_sessions)
-                    amnt = float(user_response) * 23.99
-                    order_data["ivida5k"].update({res : int(user_response)})
-                    print(order_data)
-                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
-                    order_states[user_number] = 'cart_choice'
-                    return str(resp)
+                    if (database.add_to_cart(customer_id, res, 3, user_response)):
+                        order_data["zpods"].update({res : int(user_response)})
+                        resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
+                        order_states[user_number] = 'cart_choice'
+                        return str(resp)
+                    else:
+                        remaining_stock = database.get_inventory_stock(res, 3)
+                        resp.message(f"Error: not enough left in stock. \nREMAINING STOCK: {remaining_stock}\n\n{list_items(3)}")
+                        order_states[user_number] = 'flavor_choice'    
+                        return str(resp)
             else:
                 resp.message("Please enter a number.")
                 order_states[user_number] = 'qty_choice'
@@ -296,7 +288,7 @@ def sms_reply():
         #ivida7k
         elif user_sessions[user_number]['brand'] == 'IVIDA7K':
             print(order_data['ivida7k'])
-            res = list(order_data['ivida7k'].keys())[-1]
+            res = user_sessions[user_number]['last_selected_flavor'] 
             ## if user responds with a number, then we can add it to the cart
             if user_response.isnumeric():
                 ## make sure the order cannot be 0 or less
@@ -304,14 +296,17 @@ def sms_reply():
                     resp.message("Please enter a number between 1 and 10")
                     return str(resp)
                 else: 
-                    current_date = datetime.date.today()
                     print(user_sessions)
-                    amnt = float(user_response) * 23.99
-                    order_data["ivida7k"].update({res : int(user_response)})
-                    print(order_data)
-                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
-                    order_states[user_number] = 'cart_choice'
-                    return str(resp)
+                    if (database.add_to_cart(customer_id, res, 4, user_response)):
+                        order_data["zpods"].update({res : int(user_response)})
+                        resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
+                        order_states[user_number] = 'cart_choice'
+                        return str(resp)
+                    else:
+                        remaining_stock = database.get_inventory_stock(res, 4)
+                        resp.message(f"Error: not enough left in stock. \nREMAINING STOCK: {remaining_stock}\n\n{list_items(4)}")
+                        order_states[user_number] = 'flavor_choice'    
+                        return str(resp)
             else:
                 resp.message("Please enter a number.")
                 order_states[user_number] = 'qty_choice'
@@ -319,7 +314,7 @@ def sms_reply():
         #RM
         elif user_sessions[user_number]['brand'] == 'RM':
             print(order_data['rm'])
-            res = list(order_data['rm'].keys())[-1]
+            res = user_sessions[user_number]['last_selected_flavor'] 
             ## if user responds with a number, then we can add it to the cart
             if user_response.isnumeric():
                 ## make sure the order cannot be 0 or less
@@ -328,12 +323,16 @@ def sms_reply():
                     return str(resp)
                 else: 
                     print(user_sessions)
-                    amnt = float(user_response) * 23.99
-                    order_data["rm"].update({res : int(user_response)})
-                    print(order_data)
-                    resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
-                    order_states[user_number] = 'cart_choice'
-                    return str(resp)
+                    if (database.add_to_cart(customer_id, res, 5, user_response)):
+                        order_data["zpods"].update({res : int(user_response)})
+                        resp.message("Added " + user_response + "." + "\n"  + "Would you like to keep shopping?" + "\n" + "Please text 'Y' to continue or 'N' to check out.")
+                        order_states[user_number] = 'cart_choice'
+                        return str(resp)
+                    else:
+                        remaining_stock = database.get_inventory_stock(res, 5)
+                        resp.message(f"Error: not enough left in stock. \nREMAINING STOCK: {remaining_stock}\n\n{list_items(5)}")
+                        order_states[user_number] = 'flavor_choice'    
+                        return str(resp)
             else:
                 resp.message("Please enter a number.")
                 order_states[user_number] = 'qty_choice'
@@ -354,10 +353,14 @@ def sms_reply():
             category = get_current_category(str(user_sessions[user_number]['brand']))
             resp.message(list_items(category))
             return str(resp)
-        elif str(user_response).lower() == "n":   #checking out 
-            resp.message(f"ORDER SUMMARY: \n{list_order()} \n\nThank you for your order.\nYour total is ${calculate_total()}.\n Your confirmation code is: {generate_confirmation_code()}")
-            print(list_order())
-            del user_sessions[user_number]
+        elif str(user_response).lower() == "n":   #checking out
+            total_cost = float(database.get_total_cost(customer_id)) # get total cost of order 
+            confirmation_code = generate_confirmation_code() #confirmation code
+            resp.message(f"ORDER SUMMARY: \n{list_order(customer_id)} \n\nThank you for your order.\nYour total is: ${total_cost}.\nYour confirmation code is: {confirmation_code}")
+
+            del user_sessions[user_number] #change this soon!! 
+            order_data['ordered'] = False #end order session 
+            database.finalize_cart(customer_id, confirmation_code)
             clear_cart()
             
             print(f"cleared cart. order data: {user_sessions}")
@@ -368,8 +371,10 @@ def sms_reply():
             return str(resp)
     else:
         print("fringe else case entered")
+        
 
-    
+
+
 def clear_cart():
     order_data["fgpods"] = {}
     order_data["ivida5k"] = {}
@@ -427,22 +432,17 @@ def get_current_category(brand):
             else:
                 return 5
             
-def list_order():
-    total_order = []
-    for category, items in order_data.items():
-        if category != "ordered":
-            if items:
-                total_order.append("\n" + category.upper())
-                for item, quantity in items.items():
-                    total_order.append(f"{quantity} {item}")
-    order_list = '\n'.join(total_order)
+def list_order(customer_id):
+    order_summary = database.get_order_summary(customer_id)
+    indexed_order = [f'{name} - {qty}' for _, _, _, qty, _, name in order_summary]
+    order_list = "\n".join(indexed_order)
     return order_list
 
 def calculate_total():
     total_sum = 0
     for category, products in order_data.items():
         if category != "ordered":
-            for flavor, qty in products.items():
+            for _, qty in products.items():
                 if category == "zpods":
                     total_sum += (qty * COST_ZPOD)
                 elif category == "fgpods":
@@ -459,18 +459,6 @@ def get_item_list(category_id):
     product_list = database.get_product_list(category_id)
     indexed_flavors = [f'{flavor.replace("_", " ")}' for _, flavor, _, _, qty in product_list]
     return indexed_flavors
-
-"""order_data = {"ordered": False,
-              "zpods": {'acai berry':2,
-                        'chew':3},
-              "fgpods": {'lemon mint':5,
-                         'rotund belly':3
-                         },
-              "ivida5k": {},
-              "ivida7k": {},
-              "rm": {}}
-
-print(calculate_total())"""
 
 if __name__ == "__main__":
     app.run(debug=True)

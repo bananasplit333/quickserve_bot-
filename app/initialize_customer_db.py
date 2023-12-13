@@ -4,13 +4,23 @@ conn = sqlite3.connect('customer_orders.db')
 conn.execute("PRAGMA foreign_keys=ON;")
 
 cursor = conn.cursor()
+cursor.execute('''CREATE TABLE reserved_stock (
+                order_id INTEGER PRIMARY KEY NOT NULL,
+                product_id INTEGER NOT NULL,
+                customer_id INTEGER NOT NULL,
+                reserved_quantity INTEGER NOT NULL,
+                FOREIGN KEY (order_id) REFERENCES orders(order_id),
+                FOREIGN KEY (product_id) REFERENCES products(product_id)
+                )''')
+
+cursor = conn.cursor()
 cursor.execute('''CREATE TABLE customers (
                customer_id INTEGER PRIMARY KEY AUTOINCREMENT,
                first_name TEXT,
                last_name TEXT,
                phone_number INTEGER UNIQUE,
                address TEXT
-)''')
+)''')   
 
 cursor.execute('''CREATE TABLE categories (
                category_id INTEGER PRIMARY KEY AUTOINCREMENT,
